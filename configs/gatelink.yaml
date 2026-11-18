@@ -1,0 +1,107 @@
+# GateLink configuration used for all experiments in the paper.
+# Paths are relative to the repository root. Download instructions for every file: README.md, "Data".
+
+output_dir: runs/gatelink
+
+# Recognizer (only for the optional end-to-end setting with predicted mentions; the paper uses gold mentions)
+ner:
+  model: microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract-fulltext
+  epochs: 20
+  lr: 3.0e-5
+  batch_size: 8
+  max_len: 256
+
+# Candidate generator C: exact match + zero-shot SapBERT, top-k concepts
+retrieval:
+  model: cambridgeltl/SapBERT-from-PubMedBERT-fulltext
+  k: 20
+  device: auto           # cuda | mps | cpu | auto
+  cache_dir: cache/embeddings
+
+# LLM rerankers L, served locally with Ollama (native API, so that reasoning can be switched off):
+#   OLLAMA_NUM_PARALLEL=4 OLLAMA_CONTEXT_LENGTH=4096 ollama serve
+#   ollama pull gemma4:12b && ollama pull gemma4:26b && ollama pull gemma4:31b
+# All tags are the default 4-bit quantizations; the model digests are listed in Supplementary Section S1.
+llm:
+  - name: small
+    model: gemma4:12b                                 # dense, 12B parameters
+    active_params_b: 12                               # active parameters (billions), for the compute estimate
+    base_url: http://localhost:11434
+    api: ollama
+    think: false                                      # reasoning disabled
+    num_ctx: 4096
+    max_workers: 4                                    # = OLLAMA_NUM_PARALLEL
+    n_gpus: 1
+  - name: mid
+    model: gemma4:26b                                 # mixture of experts, about 4B active parameters
+    active_params_b: 4
+    base_url: http://localhost:11434
+    api: ollama
+    think: false
+    num_ctx: 4096
+    max_workers: 4
+    n_gpus: 1
+  - name: large
+    model: gemma4:31b                                 # dense, 31B; largest Gemma 4 that fits in 36 GB at 4 bits
+    active_params_b: 31
+    base_url: http://localhost:11434
+    api: ollama
+    think: false
+    max_tokens: 32                                    # 8 for the other models (default)
+    num_ctx: 4096
+    max_workers: 2
+    n_gpus: 1
+
+# Gate g and threshold rules (Section 2.3)
+gate:
+  kind: hgb              # hgb: scikit-learn HistGradientBoosting (paper) | gbm: LightGBM | lr: logistic regression
+  target: error          # label z(m) = 1 if the retriever's top candidate is wrong
+  accuracy_delta: 0.5    # GateLink-A: accuracy@1 points below the best development accuracy
+  budget: 0.30           # GateLink-B: share of mentions sent to the LLM
+  epsilon: 0.01          # GateLink-R: bound on the expected share of harmful skips
+
+# Vocabularies V_t
+kbs:
+  Disease:   {kind: ctd, path: data/kb/CTD_diseases.tsv.gz}
+  Chemical:  {kind: ctd, path: data/kb/CTD_chemicals.tsv.gz}
+  Gene:
+    kind: gene_info
+    path: data/kb/gene_info.gz
+    taxa: [9606, 10090, 10116, 7227, 3702, 7955, 6239, 559292, 4932, 9913, 9031, 8355]
+
+# Corpora (Section 2.4)
+corpora:
+  ncbi_disease:
+    format: pubtator
+    files: {train: data/corpora/ncbi_disease/NCBItrainset_corpus.txt,
+            dev: data/corpora/ncbi_disease/NCBIdevelopset_corpus.txt,
+            test: data/corpora/ncbi_disease/NCBItestset_corpus.txt}
+    type_map: {SpecificDisease: Disease, DiseaseClass: Disease, Modifier: Disease, CompositeMention: Disease}
+  bc5cdr:
+    format: pubtator
+    files: {train: data/corpora/bc5cdr/CDR_TrainingSet.PubTator.txt,
+            dev: data/corpora/bc5cdr/CDR_DevelopmentSet.PubTator.txt,
+            test: data/corpora/bc5cdr/CDR_TestSet.PubTator.txt}
+    type_map: {Disease: Disease, Chemical: Chemical}
+  nlm_chem:
+    format: bioc
+    files: {train: data/corpora/nlm_chem/BC7T2-NLMChem-corpus-train.BioC.xml,
+            dev: data/corpora/nlm_chem/BC7T2-NLMChem-corpus-dev.BioC.xml,
+            test: data/corpora/nlm_chem/BC7T2-NLMChem-corpus-test.BioC.xml}
+    type_map: {Chemical: Chemical}
+    id_keys: [identifier, Identifier]
+  # NLM-Gene with the species step of the candidate generator (gatelink/species.py): used in the paper
+  nlm_gene_sp:
+    format: bioc
+    files: {train: data/corpora/nlm_gene/train.BioC.xml, dev: data/corpora/nlm_gene/dev.BioC.xml,
+            test: data/corpora/nlm_gene/test.BioC.xml}            # built by scripts/prepare_nlm_gene.py
+    type_map: {Gene: Gene, GENERIF: Gene, STARGENE: Gene}
+    id_keys: [NCBI Gene identifier, NCBI Gene, identifier]
+    species_prior: true
+  # NLM-Gene without the species step (Supplementary Section S12 only)
+  nlm_gene:
+    format: bioc
+    files: {train: data/corpora/nlm_gene/train.BioC.xml, dev: data/corpora/nlm_gene/dev.BioC.xml,
+            test: data/corpora/nlm_gene/test.BioC.xml}
+    type_map: {Gene: Gene, GENERIF: Gene, STARGENE: Gene}
+    id_keys: [NCBI Gene identifier, NCBI Gene, identifier]

@@ -1,0 +1,15 @@
+# data, downloaded models and run outputs (see README.md)
+data/
+cache/
+runs/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+# editors and OS
+.idea/
+.vscode/
+.DS_Store

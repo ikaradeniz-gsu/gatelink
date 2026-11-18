@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gatelink"
+version = "1.0.0"
+description = "GateLink: selective large language model reranking for biomedical entity normalization"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "İlknur Karadeniz"}]
+
+[tool.setuptools]
+packages = ["gatelink"]

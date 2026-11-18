@@ -1,0 +1,2 @@
+etype,metric,n,S1,S2,GateLinkA,GateLinkR,share_llm_R,share_llm,share_llm_oracle,harmful_skips,beneficial_skips
+Disease,acc1,960,83.85416666666666,84.47916666666667,87.1875,87.8125,35.104166666666664,20.3125,7.083333333333333,19,45

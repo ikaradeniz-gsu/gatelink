@@ -1,0 +1,14 @@
+# Python >= 3.10. Versions used for the paper in parentheses (Python 3.14.9, macOS, Apple M5 Max).
+torch>=2.3              # (2.15.0) SapBERT retriever; Apple GPU (MPS), CUDA or CPU
+transformers>=4.44      # (5.23.0)
+bioc>=2.1               # BioC XML corpora (NLM-Chem, NLM-Gene)
+numpy                   # (2.5.4)
+pandas
+scikit-learn>=1.4       # (1.9.1) gate: HistGradientBoosting + isotonic calibration
+pyyaml
+matplotlib
+pytest
+# optional
+# openai>=1.40          # only for an OpenAI-compatible LLM server instead of Ollama
+# accelerate>=0.33      # only for training the optional recognizer (scripts/01_train_ner.py)
+# lightgbm>=4.3         # only for gate kind: gbm

@@ -1,0 +1,19 @@
+{
+  "metric": "acc1",
+  "taus": {
+    "S6 GateLink-A": 0.8278061224489797,
+    "S7 GateLink-B": 0.9919270833333332,
+    "S8 GateLink-R": 0.8427306188175754,
+    "S3": -0.04541015625,
+    "S4": -1.0
+  },
+  "n_test_mentions": 2729,
+  "n_gold_test": 2729,
+  "gate_auroc_test": 0.8023401977530252,
+  "gate_ece_test": 0.028298904052739812,
+  "random_gate_at_S6_share": {
+    "mean": 42.32869182850861,
+    "sd": 0.3529314714500967,
+    "n_draws": 20
+  }
+}
